@@ -6,7 +6,7 @@
 #include "./ProteCt++.h"
 #include <Windows.h>
 #include <winternl.h>
-
+#include <intrin.h>
 typedef NTSTATUS(NTAPI* TNtQueryInformationProcess)(
 	IN HANDLE           ProcessHandle,
 	IN PROCESSINFOCLASS ProcessInformationClass,
@@ -69,40 +69,36 @@ bool CheckProcessDebugPort() {
 	}
 }
 
-bool CheckDebugFlagsEFLAGS() {
-	DWORD dwFlags;
-	__asm
+// Funzione per controllare se un byte è presente in una determinata area di memoria (è veramente utile?)
+bool CheckForByte(BYTE cByte, PVOID pMemory, SIZE_T nMemorySize = 0) {
+	PBYTE pBytes = (PBYTE)pMemory;
+	for (SIZE_T i = 0; ; i++)
 	{
-		pushfd
-		pop eax
-		mov dwFlags, eax // Ottiene i flag del registro EFLAGS (WIP)
+		
+		if (((nMemorySize > 0) && (i >= nMemorySize)) ||
+			((nMemorySize == 0) && (pBytes[i] == 0xC3)))
+			break;
+
+		if (pBytes[i] == cByte)
+			return true;
 	}
-	if (dwFlags & 0x00010000) // se il bit 16 è settato allora c'è un debugger
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	return false;
 }
 
 
-bool CheckDebugFlagsDR7() {
-	DWORD dr7;
-	__asm {
-		mov eax, dr7
-		mov dr7, eax
-	}
-	if (dr7 & 0x00000001) { // Controlla se il bit 0 è impostato, indicando un punto di interruzione hardware
-		return true;
-	}
-	else {
+bool CheckForBreakpoint() {
+	CONTEXT ctx;
+	ZeroMemory(&ctx, sizeof(CONTEXT));
+	ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+	if (!GetThreadContext(GetCurrentProcess(), &ctx))
+	{
 		return false;
 	}
+	else if (ctx.Dr0 != 0 || ctx.Dr1 != 0 || ctx.Dr2 != 0 || ctx.Dr3 != 0) //da vedere se funge ref: https://anti-debug.checkpoint.com/techniques/process-memory.html#software-breakpoints
+	{
+		return true;
+	}
 }
-
-
 
 
 

@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+/.vs/ProteCt++
+/ProteCt++/x64/Debug
+/x64/Debug

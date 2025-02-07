@@ -5,8 +5,12 @@
 extern "C" {
 #endif
 
-	// Funzione per verificare l'importazione della libreria
 	bool IsLibraryLoaded();
+	bool IsSimpleDebuggerPresent();
+	bool CheckRemoteDebugger();
+	bool CheckProcessDebugPort();
+	bool CheckDebugFlagsEFLAGS();
+
 
 #ifdef __cplusplus
 }

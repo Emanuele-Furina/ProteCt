@@ -85,7 +85,7 @@ bool CheckForByte(BYTE cByte, PVOID pMemory, SIZE_T nMemorySize = 0) {
 	return false;
 }
 
-
+// Funzione per controllare se un breakpoint è presente
 bool CheckForBreakpoint() {
 	CONTEXT ctx;
 	ZeroMemory(&ctx, sizeof(CONTEXT));

@@ -9,8 +9,8 @@ extern "C" {
 	bool IsSimpleDebuggerPresent();
 	bool CheckRemoteDebugger();
 	bool CheckProcessDebugPort();
-	bool CheckDebugFlagsEFLAGS();
-
+	bool CheckForByte();
+	bool CheckForBreakpoint();
 
 #ifdef __cplusplus
 }

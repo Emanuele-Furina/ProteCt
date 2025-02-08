@@ -60,44 +60,32 @@ private:
 	HCRYPTPROV hProv_;
 };
 
-/**
- * @brief Classe RAII per gestire automaticamente l'oggetto hash.
- */
-class CryptHash {
-public:
-	CryptHash(HCRYPTPROV hProv) : hHash_(NULL) {
-		if (!CryptCreateHash(hProv, CALG_SHA_256, 0, 0, &hHash_)) {
-			hHash_ = NULL;
-		}
-	}
-	~CryptHash() {
-		if (hHash_) {
-			CryptDestroyHash(hHash_);
-		}
-	}
-	HCRYPTHASH get() const { return hHash_; }
-	bool isValid() const { return hHash_ != NULL; }
-private:
-	HCRYPTHASH hHash_;
-};
-
-/**
- * @brief Verifica se la libreria è caricata.
- *
- * @return true se la libreria è caricata, altrimenti false.
- */
-bool IsLibraryLoaded() {
-	return true;
-}
-
-/**
- * @brief Controlla se un debugger semplice è presente.
- *
- * @return true se un debugger è presente, altrimenti false.
- */
 bool IsSimpleDebuggerPresent() {
-	return IsDebuggerPresent();
+
+	if (IsDebuggerPresent())
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
+
+
+bool CheckRemoteDebugger() {
+
+	BOOL bDebuggerPresent;
+	if (CheckRemoteDebuggerPresent(GetCurrentProcess(), &bDebuggerPresent) && TRUE == bDebuggerPresent) {
+	
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+
 
 /**
  * @brief Controlla se un debugger remoto è presente.
@@ -159,10 +147,14 @@ bool CheckForBreakpoint() {
 	CONTEXT ctx;
 	ZeroMemory(&ctx, sizeof(CONTEXT));
 	ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
-	if (!GetThreadContext(GetCurrentProcess(), &ctx)) {
+	if (!GetThreadContext(GetCurrentProcess(), &ctx))
+	{
 		return false;
 	}
-	return ctx.Dr0 != 0 || ctx.Dr1 != 0 || ctx.Dr2 != 0 || ctx.Dr3 != 0;
+	else if (ctx.Dr0 != 0 || ctx.Dr1 != 0 || ctx.Dr2 != 0 || ctx.Dr3 != 0) //da vedere se funge ref: https://anti-debug.checkpoint.com/techniques/process-memory.html#software-breakpoints
+	{
+		return true;
+	}
 }
 
 bool CheckForVM() {

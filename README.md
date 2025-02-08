@@ -13,10 +13,3 @@ ProteCt++ è una libreria statica progettata per rilevare la presenza di debugge
 - **CheckForVM**: Verifica se il processo è in esecuzione in una macchina virtuale controllando la presenza di moduli noti di VM.
 - **IsMemoryBreakpoints**: Verifica se il processo è in debug utilizzando una pagina di memoria con protezione di guardia.
 
-## Requisiti
-
-- Windows
-- Visual Studio
-- C++14
-
-

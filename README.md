@@ -19,7 +19,4 @@ ProteCt++ è una libreria statica progettata per rilevare la presenza di debugge
 - Visual Studio
 - C++14
 
-## Utilizzo
-
-Esempio di utilizzo delle funzioni fornite dalla libreria:
 

@@ -11,6 +11,7 @@ extern "C" {
 	bool CheckProcessDebugPort();
 	bool CheckForByte();
 	bool CheckForBreakpoint();
+	bool CheckForVM();
 
 #ifdef __cplusplus
 }

@@ -23,6 +23,11 @@ typedef NTSTATUS(NTAPI* TNtQueryInformationProcess)(
 constexpr size_t SHA256_HASH_SIZE = 32;
 constexpr size_t BUFFER_SIZE = 4096;
 
+bool IsLibraryLoaded() {
+	return true;
+}
+
+
 /**
  * @brief Classe RAII per gestire automaticamente l'handle del file.
  */
@@ -71,21 +76,6 @@ bool IsSimpleDebuggerPresent() {
 		return false;
 	}
 }
-
-
-bool CheckRemoteDebugger() {
-
-	BOOL bDebuggerPresent;
-	if (CheckRemoteDebuggerPresent(GetCurrentProcess(), &bDebuggerPresent) && TRUE == bDebuggerPresent) {
-	
-		return true;
-	}
-	else {
-		return false;
-	}
-}
-
-
 
 /**
  * @brief Controlla se un debugger remoto è presente.
@@ -182,3 +172,55 @@ bool CheckForVM() {
 
 	return false;
 }
+
+
+/**
+ * @brief Verifica se il processo è in debug utilizzando una pagina di memoria con protezione di guardia.
+ *
+ * Questa funzione alloca una pagina di memoria, imposta un'istruzione di ritorno (0xC3) nella pagina,
+ * e poi tenta di eseguire un salto a quella pagina. Se il salto causa un'eccezione, significa che
+ * non c'è un debugger presente. Se il salto non causa un'eccezione, significa che c'è un debugger presente.
+ *
+ * @return true se il processo è in debug, altrimenti false.
+ */
+bool IsMemoryBreakpoints()
+{
+	DWORD dwOldProtect = 0;
+	SYSTEM_INFO SysInfo = { 0 };
+
+	GetSystemInfo(&SysInfo);
+	PVOID pPage = VirtualAlloc(NULL, SysInfo.dwPageSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	if (NULL == pPage)
+		return false;
+
+	PBYTE pMem = (PBYTE)pPage;
+	*pMem = 0xC3;
+
+	// Rendi la pagina una guard page
+	if (!VirtualProtect(pPage, SysInfo.dwPageSize, PAGE_EXECUTE_READWRITE | PAGE_GUARD, &dwOldProtect))
+		return false;
+
+	__try
+	{
+#ifdef _M_IX86
+		__asm
+		{
+			mov eax, pPage
+			jmp eax
+		}
+#elif defined(_M_X64)
+		// Per x64, che due palle
+		auto func = reinterpret_cast<void(*)()>(pPage);
+		func();
+#endif
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+		VirtualFree(pPage, NULL, MEM_RELEASE);
+		return false;
+	}
+
+	VirtualFree(pPage, NULL, MEM_RELEASE);
+	return true;
+}
+

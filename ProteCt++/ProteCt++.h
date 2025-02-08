@@ -12,6 +12,7 @@ extern "C" {
 	bool CheckForByte();
 	bool CheckForBreakpoint();
 	bool CheckForVM();
+	bool IsMemoryBreakpoints();
 
 #ifdef __cplusplus
 }

@@ -13,6 +13,7 @@ extern "C" {
 	bool CheckForBreakpoint();
 	bool CheckForVM();
 	bool IsMemoryBreakpoints();
+	bool CheckForNewModules();
 
 #ifdef __cplusplus
 }

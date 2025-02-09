@@ -1,6 +1,6 @@
 #ifndef PROTECTPP_H
 #define PROTECTPP_H
-
+#include <windows.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

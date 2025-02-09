@@ -9,7 +9,7 @@ extern "C" {
 	bool IsSimpleDebuggerPresent();
 	bool CheckRemoteDebugger();
 	bool CheckProcessDebugPort();
-	bool CheckForByte();
+	bool CheckForByte(BYTE cByte, PVOID pMemory, SIZE_T nMemorySize);
 	bool CheckForBreakpoint();
 	bool CheckForVM();
 	bool IsMemoryBreakpoints();

@@ -1,19 +1,5 @@
 # ProteCt++
+ProteCt++ is a static library designed to detect the presence of debuggers in a process. It includes various functions to check if a process is running under a debugger.
 
-ProteCt++ è una libreria statica progettata per rilevare la presenza di debugger in un processo. Include diverse funzioni per verificare se un processo è in esecuzione sotto un debugger.
-
-## Funzionalità
-
-- **IsLibraryLoaded**: Verifica se la libreria è caricata correttamente.
-- **IsSimpleDebuggerPresent**: Verifica se un debugger è presente utilizzando la funzione `IsDebuggerPresent` di Windows.
-- **CheckRemoteDebugger**: Verifica se un debugger remoto è presente utilizzando la funzione `CheckRemoteDebuggerPresent` di Windows.
-- **CheckProcessDebugPort**: Verifica se il processo è in debug controllando il valore del `ProcessDebugPort`.
-
-
-...WIP...
-
-## Requisiti
-
-- Windows
-- Visual Studio
-- C++14
+# Disclaimer
+This project is **strictly for educational purposes**. It is **not** intended for use with real-world software or systems, and should not be employed to protect against debugging or reverse engineering in any production environment.

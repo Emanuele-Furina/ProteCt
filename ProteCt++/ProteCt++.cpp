@@ -39,9 +39,9 @@ bool IsSimpleDebuggerPresent() {
 }
 
 /**
- * @brief Controlla se un debugger remoto è presente.
+ * @brief Checks whether a remote debugger is present.
  *
- * @return true se un debugger remoto è presente, altrimenti false.
+ * @return true if a remote debugger is present, false otherwise.
  */
 bool CheckRemoteDebugger() {
 	BOOL bDebuggerPresent = FALSE;
@@ -49,9 +49,9 @@ bool CheckRemoteDebugger() {
 }
 
 /**
- * @brief Controlla se il processo è in debug tramite il ProcessDebugPort.
+ * @brief Checks whether the process is debugged via the ProcessDebugPort.
  *
- * @return true se il processo è in debug, altrimenti false.
+ * @return true if the process is debugged, false otherwise.
  */
 bool CheckProcessDebugPort() {
 	/* HMODULE hNtdll = LoadLibraryA("ntdll.dll");  Uso GetModuleHandleA per evitare di ricaricare la libreria e fare interferenza con CheckForNewModules()  */
@@ -71,12 +71,12 @@ bool CheckProcessDebugPort() {
 }
 
 /**
- * @brief Controlla se un byte specifico è presente in una determinata area di memoria.
+ * @brief Checks whether a specific byte is present in a specific memory area.
  *
- * @param cByte Il byte da cercare.
- * @param pMemory Il puntatore all'area di memoria.
- * @param nMemorySize La dimensione dell'area di memoria (opzionale).
- * @return true se il byte è presente, altrimenti false.
+ * @param cByte The byte to be searched for.
+ * @param pMemory The pointer to the memory area.
+ * @param nMemorySize The size of the memory area (optional).
+ * @return true if the byte is present, false otherwise.
  */
 bool CheckForByte(BYTE cByte, PVOID pMemory, SIZE_T nMemorySize = 0) {
 	PBYTE pBytes = static_cast<PBYTE>(pMemory);
@@ -92,9 +92,9 @@ bool CheckForByte(BYTE cByte, PVOID pMemory, SIZE_T nMemorySize = 0) {
 }
 
 /**
- * @brief Controlla se un breakpoint è presente.
+ * @brief Checks whether a breakpoint is present.
  *
- * @return true se un breakpoint è presente, altrimenti false.
+ * @return true if a breakpoint is present, false otherwise.
  */
 bool CheckForBreakpoint() {
 	CONTEXT ctx = { 0 };
@@ -106,14 +106,14 @@ bool CheckForBreakpoint() {
 }
 
 /**
- * @brief Verifica se il processo è in esecuzione in una macchina virtuale.
+ * @brief Checks whether the process is running in a virtual machine.
  *
- * Questa funzione controlla la presenza di moduli noti di macchine virtuali
- * come VMware, VirtualBox, QEMU, Xen, KVM, Virtual PC, Hyper-V, Bochs, Parallels,
- * Bhyve, Virtuozzo e OpenVZ. Se uno di questi moduli è caricato, la funzione
- * restituisce true, indicando che il processo è in esecuzione in una macchina virtuale.
+ * This function checks for the presence of known virtual machine modules
+ * such as VMware, VirtualBox, QEMU, Xen, KVM, Virtual PC, Hyper-V, Bochs, Parallels,
+ * Bhyve, Virtuozzo and OpenVZ. If one of these modules is loaded, the function
+ * returns true, indicating that the process is running in a virtual machine.
  *
- * @return true se il processo è in esecuzione in una macchina virtuale, altrimenti false.
+ * @return true if the process is running in a virtual machine, otherwise false.
  */
 bool CheckForVM() {
 	const char* vmVendors[] = {
@@ -130,15 +130,15 @@ bool CheckForVM() {
 }
 
 /**
- * @brief Verifica se il processo è in debug utilizzando una pagina di memoria con protezione di guardia.
+ * @brief Checks whether the process is being debugged using a memory page with guard protection.
  *
- * Questa funzione alloca una pagina di memoria, imposta un'istruzione di ritorno (0xC3) nella pagina,
- * e poi tenta di eseguire un salto a quella pagina. Se il salto causa un'eccezione, significa che
- * non c'è un debugger presente. Se il salto non causa un'eccezione, significa che c'è un debugger presente.
- * 
- * Non so cosa altro inventarmi se lo bypassano sono dei cazzo di maghi.
+ * This function allocates a memory page, sets a return instruction (0xC3) to the page,
+ * and then attempts to perform a jump to that page. If the jump causes an exception, it means that
+ * there is no debugger present. If the jump does not cause an exception, it means that there is a debugger present.
  *
- * @return true se il processo è in debug, altrimenti false.
+ * I don't know what else to come up with if they bypass it they're fucking wizards.
+ *
+ * @return true if the process is debugged, otherwise false.
  */
 bool IsMemoryBreakpoints() {
 	SYSTEM_INFO SysInfo = { 0 };
@@ -197,17 +197,18 @@ bool IsMemoryBreakpoints() {
 
 
 /**
- * @brief Controlla se nuovi moduli sono stati caricati nel processo corrente.
+ * @brief Checks whether new modules have been loaded in the current process.
  *
- * Questa funzione utilizza l'API `EnumProcessModules` per enumerare tutti i moduli caricati
- * nel processo corrente. I moduli sono librerie dinamiche (DLL) che il processo ha caricato
- * in memoria. La funzione mantiene una lista statica dei moduli caricati inizialmente e la
- * confronta con la lista corrente dei moduli. Se viene rilevato un nuovo modulo che non era
- * presente nella lista iniziale, la funzione restituisce true, indicando che un nuovo modulo
- * è stato caricato.
+ * This function uses the `EnumProcessModules` API to enumerate all modules loaded
+ * in the current process. Modules are dynamic libraries (DLLs) that the process has loaded
+ * in memory. The function maintains a static list of the initially loaded modules and * compares it with the current list of modules.
+ * compares it with the current list of modules. If a new module is detected that was not
+ * present in the initial list, the function returns true, indicating that a new module
+ * has been loaded.
  *
- * @return true se nuovi moduli sono stati caricati, altrimenti false.
+ * @return true if new modules have been loaded, otherwise false.
  */
+
 bool CheckForNewModules() {
 	static std::vector<HMODULE> loadedModules;
 

@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include <psapi.h>
 
+#ifndef ThreadHideFromDebugger
+#define ThreadHideFromDebugger (THREADINFOCLASS)0x11
+#endif
 
 typedef NTSTATUS(NTAPI* TNtQueryInformationProcess)(
 	IN HANDLE           ProcessHandle,
@@ -144,17 +147,6 @@ bool IsMemoryBreakpoints() {
 	SYSTEM_INFO SysInfo = { 0 };
 	GetSystemInfo(&SysInfo);
 
-	// Nasconde il thread dal debugger
-	HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
-	if (hNtdll) {
-		auto pfnNtSetInformationThread = reinterpret_cast<TNtSetInformationThread>(
-			GetProcAddress(hNtdll, "NtSetInformationThread")
-			);
-		if (pfnNtSetInformationThread) {
-			pfnNtSetInformationThread(GetCurrentThread(), (THREADINFOCLASS)0x11, NULL, 0);
-		}
-	}
-
 	// Alloca una pagina di memoria eseguibile
 	PVOID pPage = VirtualAlloc(NULL, SysInfo.dwPageSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	if (!pPage) {
@@ -162,16 +154,25 @@ bool IsMemoryBreakpoints() {
 	}
 
 	PBYTE pMem = static_cast<PBYTE>(pPage);
-	*pMem = 0xC3;  // Istruzione "RET" per terminare la funzione in modo sicuro
+	*pMem = 0xC3;  // Istruzione "RET" per terminare la funzione
 
 	// Protegge la memoria con il flag PAGE_GUARD
 	DWORD dwOldProtect = 0;
-	if (!VirtualProtect(pPage, SysInfo.dwPageSize, PAGE_EXECUTE_READWRITE | PAGE_GUARD, &dwOldProtect)) {
+	if (!VirtualProtect(pPage, SysInfo.dwPageSize, PAGE_EXECUTE_READ | PAGE_GUARD, &dwOldProtect)) {
 		VirtualFree(pPage, 0, MEM_RELEASE);
 		return false;
 	}
 
-	bool debuggerDetected = false;
+	// Nasconde il thread corrente al debugger
+	HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
+	if (hNtdll) {
+		auto pfnNtSetInformationThread = reinterpret_cast<TNtSetInformationThread>(GetProcAddress(hNtdll, "NtSetInformationThread"));
+		if (pfnNtSetInformationThread) {
+			pfnNtSetInformationThread(GetCurrentThread(), ThreadHideFromDebugger, NULL, 0);
+		}
+	}
+
+	bool exceptionOccurred = false;
 
 	__try {
 #ifdef _M_IX86
@@ -184,16 +185,18 @@ bool IsMemoryBreakpoints() {
 		func();
 #endif
 	}
-	__except (EXCEPTION_EXECUTE_HANDLER) {
-		debuggerDetected = true;
+	__except (GetExceptionCode() == EXCEPTION_GUARD_PAGE ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
+		exceptionOccurred = true;
 	}
 
 	// Ripristina la protezione della memoria
 	VirtualProtect(pPage, SysInfo.dwPageSize, dwOldProtect, &dwOldProtect);
 	VirtualFree(pPage, 0, MEM_RELEASE);
 
-	return debuggerDetected;
+	// Se l'eccezione non si è verificata, potrebbe essere presente un debugger
+	return !exceptionOccurred;
 }
+
 
 
 /**

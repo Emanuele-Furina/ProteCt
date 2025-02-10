@@ -136,7 +136,7 @@ bool CheckForVM() {
  * and then attempts to perform a jump to that page. If the jump causes an exception, it means that
  * there is no debugger present. If the jump does not cause an exception, it means that there is a debugger present.
  *
- * 
+
  *
  * @return true if the process is debugged, otherwise false.
  */

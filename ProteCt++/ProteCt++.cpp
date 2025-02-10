@@ -28,49 +28,11 @@ typedef NTSTATUS(NTAPI* TNtSetInformationThread)(
 	ULONG ThreadInformationLength
 );
 
-constexpr size_t SHA256_HASH_SIZE = 32;
-constexpr size_t BUFFER_SIZE = 4096;
 
 bool IsLibraryLoaded() {
 	return true;
 }
 
-/**
- * @brief Classe RAII per gestire automaticamente l'handle del file.
- */
-class FileHandle {
-public:
-	explicit FileHandle(HANDLE handle) : handle_(handle) {}
-	~FileHandle() {
-		if (handle_ != INVALID_HANDLE_VALUE) {
-			CloseHandle(handle_);
-		}
-	}
-	HANDLE get() const { return handle_; }
-private:
-	HANDLE handle_;
-};
-
-/**
- * @brief Classe RAII per gestire automaticamente il contesto di crittografia.
- */
-class CryptContext {
-public:
-	CryptContext() : hProv_(NULL) {
-		if (!CryptAcquireContext(&hProv_, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
-			hProv_ = NULL;
-		}
-	}
-	~CryptContext() {
-		if (hProv_) {
-			CryptReleaseContext(hProv_, 0);
-		}
-	}
-	HCRYPTPROV get() const { return hProv_; }
-	bool isValid() const { return hProv_ != NULL; }
-private:
-	HCRYPTPROV hProv_;
-};
 
 bool IsSimpleDebuggerPresent() {
 	return IsDebuggerPresent();
@@ -226,9 +188,13 @@ bool IsMemoryBreakpoints() {
 		debuggerDetected = true;
 	}
 
+	// Ripristina la protezione della memoria
+	VirtualProtect(pPage, SysInfo.dwPageSize, dwOldProtect, &dwOldProtect);
 	VirtualFree(pPage, 0, MEM_RELEASE);
+
 	return debuggerDetected;
 }
+
 
 /**
  * @brief Controlla se nuovi moduli sono stati caricati nel processo corrente.

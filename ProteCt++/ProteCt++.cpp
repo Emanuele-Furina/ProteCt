@@ -36,7 +36,11 @@ bool IsLibraryLoaded() {
 	return true;
 }
 
-
+/**
+ * @brief Checks whether a debugger is present, using the IsDebuggerPresent API, this is usless as fuck
+ *
+ * @return true if a remote debugger is present, false otherwise.
+ */
 bool IsSimpleDebuggerPresent() {
 	return IsDebuggerPresent();
 }
@@ -143,7 +147,7 @@ bool CheckForVM() {
  *
  * @return true if the process is debugged, otherwise false.
  */
-bool IsMemoryBreakpoints() {
+bool BreakDebugger() {
 	SYSTEM_INFO SysInfo = { 0 };
 	GetSystemInfo(&SysInfo);
 
@@ -153,10 +157,19 @@ bool IsMemoryBreakpoints() {
 		return false;
 	}
 
-	PBYTE pMem = static_cast<PBYTE>(pPage);
-	*pMem = 0xC3;  // Istruzione "RET" per terminare la funzione
+	// Verifica che la memoria allocata sia sufficiente - FIX per il sovraccarico del buffer durante la scrittura
+	if (SysInfo.dwPageSize < 2) {
+		VirtualFree(pPage, 0, MEM_RELEASE);
+		return false;
+	}
 
-	// Protegge la memoria con il flag PAGE_GUARD
+
+	// Scrive istruzioni nella pagina per generare eccezioni controllate
+	PBYTE pMem = static_cast<PBYTE>(pPage);
+	pMem[0] = 0xCC; // Int 3 - Breakpoint software
+	pMem[1] = 0xC3; // Ret - Ritorna dalla funzione
+
+	// Protegge la memoria con PAGE_GUARD
 	DWORD dwOldProtect = 0;
 	if (!VirtualProtect(pPage, SysInfo.dwPageSize, PAGE_EXECUTE_READ | PAGE_GUARD, &dwOldProtect)) {
 		VirtualFree(pPage, 0, MEM_RELEASE);
@@ -166,7 +179,8 @@ bool IsMemoryBreakpoints() {
 	// Nasconde il thread corrente al debugger
 	HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
 	if (hNtdll) {
-		auto pfnNtSetInformationThread = reinterpret_cast<TNtSetInformationThread>(GetProcAddress(hNtdll, "NtSetInformationThread"));
+		auto pfnNtSetInformationThread = reinterpret_cast<TNtSetInformationThread>(
+			GetProcAddress(hNtdll, "NtSetInformationThread"));
 		if (pfnNtSetInformationThread) {
 			pfnNtSetInformationThread(GetCurrentThread(), ThreadHideFromDebugger, NULL, 0);
 		}
@@ -185,15 +199,18 @@ bool IsMemoryBreakpoints() {
 		func();
 #endif
 	}
-	__except (GetExceptionCode() == EXCEPTION_GUARD_PAGE ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
-		exceptionOccurred = true;
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		DWORD code = GetExceptionCode();
+		if (code == EXCEPTION_GUARD_PAGE || code == EXCEPTION_BREAKPOINT) {
+			exceptionOccurred = true;
+		}
 	}
 
 	// Ripristina la protezione della memoria
 	VirtualProtect(pPage, SysInfo.dwPageSize, dwOldProtect, &dwOldProtect);
 	VirtualFree(pPage, 0, MEM_RELEASE);
 
-	// Se l'eccezione non si è verificata, potrebbe essere presente un debugger (eccezione 0x80000003 da parte del debugger WIP)
+	// Se l'eccezione non si è verificata, potrebbe essere presente un debugger
 	return !exceptionOccurred;
 }
 

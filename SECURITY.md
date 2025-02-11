@@ -15,7 +15,7 @@ If you discover a security vulnerability in the "ProteCt++" project, we encourag
 -	Potential impact of the vulnerability.
 -	Any suggestions for fixing the issue.
   
-3.	Response Time: We commit to responding to your report within 5 business days. We will keep you updated on the status of your report and the progress in resolving the vulnerability.
+**Response Time:** We commit to responding to your report within 5 business days. We will keep you updated on the status of your report and the progress in resolving the vulnerability.
 Resolution Process
 
 1.	Assessment: The report will be assessed by our security team to confirm the vulnerability and determine its severity.

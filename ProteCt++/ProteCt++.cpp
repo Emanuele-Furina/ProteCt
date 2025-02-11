@@ -193,7 +193,7 @@ bool IsMemoryBreakpoints() {
 	VirtualProtect(pPage, SysInfo.dwPageSize, dwOldProtect, &dwOldProtect);
 	VirtualFree(pPage, 0, MEM_RELEASE);
 
-	// Se l'eccezione non si è verificata, potrebbe essere presente un debugger
+	// Se l'eccezione non si è verificata, potrebbe essere presente un debugger (eccezione 0x80000003 da parte del debugger WIP)
 	return !exceptionOccurred;
 }
 
